@@ -54,10 +54,7 @@ class DeepFashionSubsetDataset(Dataset):
         return image, label
     
     def _get_dominant_bbox(self, anno_data):
-        # Some logic that returns the bounding box of the largest item 
-        # or specifically the one matching the category in this sample
-        # (In your earlier code, you had find_dominant_item.)
-        # For demonstration:
+        # Returns bounding box of the largest item (dominant clothing)
         largest_area = 0
         best_bbox = None
         i = 1
