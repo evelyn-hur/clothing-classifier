@@ -3,24 +3,25 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class BiggerCNNBranch(nn.Module):
+class DualBranchCNN(nn.Module):
     def __init__(self, in_channels, feature_dim=256):
-        super(BiggerCNNBranch, self).__init__()
+        super(DualBranchCNN, self).__init__()
         self.conv_layers = nn.Sequential(
-            nn.Conv2d(in_channels, 64, kernel_size=3, stride=1, padding=1),
+
+            nn.Conv2d(in_channels, 64,  kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(2, stride=2),
 
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(2, stride=2),
 
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(2, stride=2),
 
             nn.Conv2d(128, feature_dim, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(feature_dim),
@@ -32,20 +33,19 @@ class BiggerCNNBranch(nn.Module):
         return self.conv_layers(x)
 
 
-class LargerShapeTextureNet(nn.Module):
-    def __init__(self, num_classes=13, shape_weight=0.5, texture_weight=0.5, feature_dim=256):
-        super(LargerShapeTextureNet, self).__init__()
+class DualBranchCNNClassifier(nn.Module):
+    def __init__(self, num_classes=13, shape_weight=1.0, texture_weight=1.0, feature_dim=256):
+        super(DualBranchCNNClassifier, self).__init__()
         self.shape_weight = shape_weight
         self.texture_weight = texture_weight
 
-        # Grayscale
-        self.shape_branch = BiggerCNNBranch(
+        # No Color
+        self.shape_branch = DualBranchCNN(
             in_channels=1, feature_dim=feature_dim)
         # Color
-        self.texture_branch = BiggerCNNBranch(
+        self.texture_branch = DualBranchCNN(
             in_channels=3, feature_dim=feature_dim)
 
-        # Instead of going straight to classes, add an extra FC layer
         self.fc1 = nn.Linear(feature_dim * 2, 512)
         self.fc2 = nn.Linear(512, num_classes)
 
