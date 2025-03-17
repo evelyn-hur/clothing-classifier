@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class BiggerCNNBranch(nn.Module):
     def __init__(self, in_channels, feature_dim=256):
         super(BiggerCNNBranch, self).__init__()
         self.conv_layers = nn.Sequential(
-
-            nn.Conv2d(in_channels, 64,  kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -27,21 +27,25 @@ class BiggerCNNBranch(nn.Module):
             nn.ReLU(),
             nn.AdaptiveAvgPool2d((1, 1))
         )
-        
+
     def forward(self, x):
         return self.conv_layers(x)
+
 
 class LargerShapeTextureNet(nn.Module):
     def __init__(self, num_classes=13, shape_weight=0.5, texture_weight=0.5, feature_dim=256):
         super(LargerShapeTextureNet, self).__init__()
         self.shape_weight = shape_weight
         self.texture_weight = texture_weight
-        
-        # No Color
-        self.shape_branch = BiggerCNNBranch(in_channels=1, feature_dim=feature_dim)
+
+        # Grayscale
+        self.shape_branch = BiggerCNNBranch(
+            in_channels=1, feature_dim=feature_dim)
         # Color
-        self.texture_branch = BiggerCNNBranch(in_channels=3, feature_dim=feature_dim)
-    
+        self.texture_branch = BiggerCNNBranch(
+            in_channels=3, feature_dim=feature_dim)
+
+        # Instead of going straight to classes, add an extra FC layer
         self.fc1 = nn.Linear(feature_dim * 2, 512)
         self.fc2 = nn.Linear(512, num_classes)
 
@@ -49,16 +53,14 @@ class LargerShapeTextureNet(nn.Module):
         x_gray = x.mean(dim=1, keepdim=True)
         shape_feats = self.shape_branch(x_gray)
         texture_feats = self.texture_branch(x)
-        
+
         shape_feats = shape_feats.view(x.size(0), -1)
         texture_feats = texture_feats.view(x.size(0), -1)
-        
+
         shape_feats = shape_feats * self.shape_weight
         texture_feats = texture_feats * self.texture_weight
         combined = torch.cat([shape_feats, texture_feats], dim=1)
-        
+
         x = F.relu(self.fc1(combined))
         out = self.fc2(x)
         return out
-
-
