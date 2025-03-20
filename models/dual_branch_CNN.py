@@ -34,7 +34,7 @@ class DualBranchCNN(nn.Module):
 
 
 class DualBranchCNNClassifier(nn.Module):
-    def __init__(self, num_classes=13, shape_weight=1.0, texture_weight=1.0, feature_dim=256):
+    def __init__(self, num_classes=13, shape_weight=0.8, texture_weight=0.2, feature_dim=256):
         super(DualBranchCNNClassifier, self).__init__()
         self.shape_weight = shape_weight
         self.texture_weight = texture_weight
